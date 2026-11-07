@@ -2,6 +2,14 @@
   "name": "dsh-attention-notify",
   "version": "0.1.0",
   "description": "Desktop notifications when DeepSeek Harness needs you: tool approvals and user questions, delivered through notify-send",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PandaAQI/dsh-attention-notify.git"
+  },
+  "homepage": "https://github.com/PandaAQI/dsh-attention-notify#readme",
+  "bugs": {
+    "url": "https://github.com/PandaAQI/dsh-attention-notify/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
