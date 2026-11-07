@@ -60,6 +60,29 @@ Windows 没有 `notify-send`，所以本插件只针对 Linux。
 | `soundFile` | `/usr/share/sounds/freedesktop/stereo/message.oga` | 音效文件；留空则静音 |
 | `cooldownMs` | `1500` | 同一标题在此窗口内只弹一次 |
 | `maxBodyChars` | `160` | 正文预算，超出用 `…` 截断 |
+| `clickAction` | `true` | 挂一个动作，点击才可被感知 |
+| `actionLabel` | `打开窗口` | 动作按钮文字 |
+| `focus` | `true` | 点击通知时把终端窗口提到前台 |
+| `windowsCommand` | `niri msg windows` | 列窗口的命令 |
+| `focusCommand` | `niri msg action focus-window --id {windowId}` | 聚焦命令模板 |
+| `focusAppId` | `kitty` | 拿不到终端 pid 时的兜底匹配 |
+| `focusPid` | `""` | 窗口属主 pid，默认取 `$KITTY_PID` |
+| `focusTimeoutMs` | `2000` | 单条命令超时 |
+
+## 点通知跳回终端
+
+通知带了 `default` 动作，点正文就是触发它——通知守护进程会顺手把弹窗关掉，
+`notify-send` 把选中的动作名打到标准输出，插件就在等这个信号（`-A default=…`）。
+
+Wayland 不允许应用把别人的窗口提到前面，所以只能走合成器 IPC。niri 上是：
+
+```
+niri msg windows                  # 找 PID 等于 $KITTY_PID 的那个窗口
+niri msg action focus-window --id <id>
+```
+
+换合成器只改 `windowsCommand` / `focusCommand` 两个模板即可，模板里支持
+`{windowId}`、`{pid}`、`{appId}`；`focus: false` 可以整块关掉。
 
 ## 设计说明
 
@@ -95,6 +118,9 @@ import("./lib/index.js").then(async ({ install }) => {
 - **没有焦点检测**。终端协议通知器能在终端聚焦时保持安静，宿主侧插件看不到这个状态，
   所以这里一律通知；唯一的降噪手段是 `cooldownMs`。
 - 通知在**提示出现时**发出，被回答后不会撤销，也没有「还在等你」的重复提醒。
+- **点通知跳窗口是合成器相关的**。只实现了 niri 且只测过 niri。而且提上来的是**窗口**，
+  不是 kitty 的具体**标签页**——切标签要开 kitty 远程控制（`allow_remote_control yes`），默认没开。
+- 弹了没点的话，会留一个等待中的 `notify-send` 进程，直到弹窗被关闭、超时或被点掉。
 
 ## 许可证
 

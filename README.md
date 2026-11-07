@@ -63,6 +63,33 @@ Task completion is deliberately **not** duplicated: the TUI's own
 | `soundFile` | `/usr/share/sounds/freedesktop/stereo/message.oga` | sound file; empty disables |
 | `cooldownMs` | `1500` | drop repeats of the same title inside this window |
 | `maxBodyChars` | `160` | body budget; longer text is cut with `…` |
+| `clickAction` | `true` | add an action so a click is observable |
+| `actionLabel` | `打开窗口` | action button text |
+| `focus` | `true` | raise the blocking terminal when the notification is clicked |
+| `windowsCommand` | `niri msg windows` | window list command for the compositor |
+| `focusCommand` | `niri msg action focus-window --id {windowId}` | focus command template |
+| `focusAppId` | `kitty` | fallback match when the terminal pid is unknown |
+| `focusPid` | `""` | window owner pid; defaults to `$KITTY_PID` |
+| `focusTimeoutMs` | `2000` | per-command timeout |
+
+## Click to jump back
+
+The notification carries a `default` action. Clicking the body asks the
+notification daemon to invoke it, which dismisses the popup and makes
+`notify-send` print the chosen action — that is the signal this plugin waits for
+(`notify-send -A default=…`).
+
+Wayland gives an application no way to raise someone else's window, so the
+plugin asks the compositor instead. With niri:
+
+```
+niri msg windows                  # find the window whose PID is $KITTY_PID
+niri msg action focus-window --id <id>
+```
+
+Other compositors can be wired through `windowsCommand` / `focusCommand` without
+touching the plugin — the templates accept `{windowId}`, `{pid}` and `{appId}`.
+Set `focus: false` to keep the click action out entirely.
 
 ## Design notes
 
@@ -105,6 +132,11 @@ import("./lib/index.js").then(async ({ install }) => {
   `cooldownMs` is the only noise control.
 - Notifications are raised when the *prompt* appears, not when it is answered; there is no
   "still waiting" reminder.
+- **Click-to-focus is compositor-specific.** Only niri is provided and tested. The focus path
+  raises the *window*, not the individual kitty *tab* — a tab switch needs kitty remote
+  control (`allow_remote_control yes`), which is not enabled by default.
+- A notification that is never clicked leaves one waiting `notify-send` process behind until
+  the daemon closes the popup; they exit on click, timeout or dismissal.
 
 ## License
 
