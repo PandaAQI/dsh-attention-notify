@@ -1,0 +1,12 @@
+# Desktop notifications for the two moments that block a turn: a tool approval
+# and a user question. Task completion is already covered by the TUI itself.
+- insert:
+    - id: attention-notify
+      name: dsh-attention-notify
+      config:
+        enabled: true
+        approval: true
+        question: true
+        sound: true
+        cooldownMs: 1500
+        maxBodyChars: 160
